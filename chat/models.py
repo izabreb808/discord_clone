@@ -19,5 +19,5 @@ class Message(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
-    image = models.FileField(upload_to='messages/', blank=True, null=True)
+    image_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

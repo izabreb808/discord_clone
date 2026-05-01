@@ -45,14 +45,14 @@ def channel(request, id):
 
     if request.method == "POST":
         content = request.POST.get('content', '').strip()
-        image = request.FILES.get('image')
+        image_url = request.POST.get('image_url', '').strip()
 
-        if content or image:
+        if content or image_url:
             Message.objects.create(
                 user=request.user,
                 channel=channel,
                 content=content,
-                image=image
+                image_url=image_url
             )
         return redirect(f'/channel/{id}/')
 

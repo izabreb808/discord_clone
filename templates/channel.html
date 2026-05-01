@@ -85,9 +85,9 @@
                             {{ msg.content }}
                         {% endif %}
 
-                        {% if msg.image %}
-                            <a href="{{ msg.image.url }}" target="_blank">
-                                <img src="{{ msg.image.url }}" class="message-image" alt="Obrazek od {{ msg.user.username }}">
+                        {% if msg.image_url %}
+                            <a href="{{ msg.image_url }}" target="_blank">
+                                <img src="{{ msg.image_url }}" class="message-image" alt="Obrazek od {{ msg.user.username }}">
                             </a>
                         {% endif %}
 
@@ -99,10 +99,10 @@
             </div>
 
             <div class="input-box">
-                <form method="post" enctype="multipart/form-data" class="d-flex">
+                <form method="post" class="d-flex">
                     {% csrf_token %}
                     <input name="content" class="form-control me-2" placeholder="Napisz wiadomość...">
-                    <input type="file" name="image" accept="image/*" class="form-control me-2">
+                    <input type="url" name="image_url" class="form-control me-2" placeholder="Link do obrazka">
                     <button class="btn btn-primary">Wyślij</button>
                 </form>
             </div>
