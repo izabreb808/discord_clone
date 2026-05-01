@@ -12,6 +12,16 @@
 
     <form method="post">
         {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                Nieprawidlowa nazwa uzytkownika albo haslo.
+            </div>
+        {% endif %}
+
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
         
         <div class="mb-3">
             {{ form.username.label_tag }}
