@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: discord-clone
+    runtime: python
+    buildCommand: bash build.sh
+    startCommand: bash start.sh
+    envVars:
+      - key: DEBUG
+        value: "True"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SQLITE_PATH
+        value: /var/data/db.sqlite3
+      - key: MEDIA_ROOT
+        value: /var/data/media
+    disk:
+      name: discord-clone-data
+      mountPath: /var/data
+      sizeGB: 1
