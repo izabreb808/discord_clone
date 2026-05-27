@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login, logout
-from django.db.models import Q
-from .models import Channel, DirectMessage, Message
+from django.db.models import Count, Q
+from django.utils import timezone
+from .models import Channel, DirectMessage, Message, Reaction
 from .forms import ChannelForm, ProfileForm, RegisterForm
 from django.http import HttpResponse
 
@@ -12,6 +13,29 @@ def only_admin(user):
 
 def can_moderate(user):
     return user.role in ['admin', 'mod']
+
+def mark_online(user):
+    get_user_model().objects.filter(id=user.id).update(last_seen=timezone.now())
+
+def notification_count(user):
+    if not user.last_login:
+        return 0
+
+    channel_messages = Message.objects.filter(
+        created_at__gt=user.last_login
+    ).exclude(user=user).count()
+    direct_messages = DirectMessage.objects.filter(
+        receiver=user,
+        created_at__gt=user.last_login
+    ).count()
+    return channel_messages + direct_messages
+
+def add_reaction_counts(messages):
+    for message in messages:
+        message.reaction_counts = Reaction.objects.filter(message=message).values(
+            'emoji'
+        ).annotate(count=Count('id')).order_by('emoji')
+    return messages
 
 def logout_view(request):
     logout(request)
@@ -39,9 +63,28 @@ def tylko_admin(request):
 
 @login_required
 def home(request):
+    q = request.GET.get('q', '').strip()
     channels = Channel.objects.all()
     users = get_user_model().objects.exclude(id=request.user.id)
-    return render(request, 'home.html', {'channels': channels, 'users': users})
+
+    if q:
+        channels = channels.filter(name__icontains=q)
+        users = users.filter(
+            Q(username__icontains=q) |
+            Q(email__icontains=q) |
+            Q(role__icontains=q)
+        )
+
+    unread_count = notification_count(request.user)
+    mark_online(request.user)
+
+    return render(request, 'home.html', {
+        'channels': channels,
+        'users': users,
+        'q': q,
+        'online_threshold': timezone.now() - timezone.timedelta(minutes=5),
+        'unread_count': unread_count
+    })
 
 @login_required
 def edit_profile(request):
@@ -79,9 +122,10 @@ def join_channel(request, id):
 
 @login_required
 def channel(request, id):
+    mark_online(request.user)
     channel = Channel.objects.get(id=id)
     channels = Channel.objects.all()
-    messages = Message.objects.filter(channel=channel)
+    messages = add_reaction_counts(list(Message.objects.filter(channel=channel)))
 
     if request.method == "POST":
         if request.user.is_blocked:
@@ -117,6 +161,25 @@ def delete_message(request, id):
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
 @login_required
+def react_message(request, id, emoji):
+    emoji_map = {
+        'like': '👍',
+        'love': '❤️',
+        'laugh': '😂',
+    }
+    selected_emoji = emoji_map.get(emoji)
+    if selected_emoji:
+        reaction, created = Reaction.objects.get_or_create(
+            message_id=id,
+            user=request.user,
+            emoji=selected_emoji
+        )
+        if not created:
+            reaction.delete()
+
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+@login_required
 def block_user(request, id):
     if not can_moderate(request.user):
         return HttpResponse("Brak dostepu")
@@ -143,6 +206,7 @@ def unblock_user(request, id):
 
 @login_required
 def direct_messages(request, user_id):
+    mark_online(request.user)
     User = get_user_model()
     receiver = User.objects.get(id=user_id)
 

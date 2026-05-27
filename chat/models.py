@@ -12,6 +12,7 @@ class User(AbstractUser):
     avatar_url = models.URLField(blank=True)
     bio = models.TextField(blank=True)
     is_blocked = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(blank=True, null=True)
 
 class Channel(models.Model):
     name = models.CharField(max_length=100)
@@ -27,6 +28,16 @@ class Message(models.Model):
     image_url = models.URLField(blank=True)
     audio_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Reaction(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    emoji = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('message', 'user', 'emoji')
 
 
 class DirectMessage(models.Model):

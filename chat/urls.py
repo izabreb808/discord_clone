@@ -7,6 +7,7 @@ urlpatterns = [
     path('channel/<int:id>/join/', views.join_channel),
     path('channels/new/', views.create_channel),
     path('delete/<int:id>/', views.delete_message),
+    path('react/<int:id>/<str:emoji>/', views.react_message),
     path('profile/', views.edit_profile),
     path('block/<int:id>/', views.block_user),
     path('unblock/<int:id>/', views.unblock_user),

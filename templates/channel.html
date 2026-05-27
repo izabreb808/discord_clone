@@ -87,8 +87,9 @@
 
                         {% if msg.image_url %}
                             <a href="{{ msg.image_url }}" target="_blank">
-                                <img src="{{ msg.image_url }}" class="message-image" alt="Obrazek od {{ msg.user.username }}">
+                                <img src="{{ msg.image_url }}" class="message-image" alt="Obrazek od {{ msg.user.username }}" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='block';">
                             </a>
+                            <a href="{{ msg.image_url }}" target="_blank" class="text-info small" style="display: none;">Otworz obrazek</a>
                         {% endif %}
 
                         {% if msg.audio_url %}
@@ -100,6 +101,15 @@
                         {% if user.role == 'admin' or user.role == 'mod' %}
                             <a href="/delete/{{ msg.id }}/">🗑</a>
                         {% endif %}
+
+                        <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
+                            <a href="/react/{{ msg.id }}/like/" class="btn btn-sm btn-outline-light">👍</a>
+                            <a href="/react/{{ msg.id }}/love/" class="btn btn-sm btn-outline-light">❤️</a>
+                            <a href="/react/{{ msg.id }}/laugh/" class="btn btn-sm btn-outline-light">😂</a>
+                            {% for reaction in msg.reaction_counts %}
+                                <span class="badge text-bg-secondary">{{ reaction.emoji }} {{ reaction.count }}</span>
+                            {% endfor %}
+                        </div>
                     </p>
                 {% endfor %}
             </div>
@@ -111,7 +121,7 @@
                     <form method="post" class="d-flex">
                         {% csrf_token %}
                         <input name="content" class="form-control me-2" placeholder="Napisz wiadomość...">
-                        <input type="url" name="image_url" class="form-control me-2" placeholder="Link do obrazka">
+                        <input type="url" name="image_url" class="form-control me-2" placeholder="https://...jpg/png/webp">
                         <input type="url" name="audio_url" class="form-control me-2" placeholder="Link do audio">
                         <button class="btn btn-primary">Wyślij</button>
                     </form>
